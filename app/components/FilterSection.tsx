@@ -35,6 +35,7 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
     experience: [],
     graduationYear: []
   });
+  
   const [isOpen, setIsOpen] = useState({
     gpa: false,
     experience: false,
@@ -52,31 +53,26 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
   ).sort();
 
   const handleFilterChange = (category: keyof FilterState, value: string) => {
-    setFilters(prev => {
-      const newFilters = { ...prev };
-      if (newFilters[category].includes(value)) {
-        newFilters[category] = newFilters[category].filter(v => v !== value);
-      } else {
-        newFilters[category] = [...newFilters[category], value];
-      }
-      return newFilters;
-    });
+    const newFilters = { ...filters };
+    if (newFilters[category].includes(value)) {
+      newFilters[category] = newFilters[category].filter(v => v !== value);
+    } else {
+      newFilters[category] = [...newFilters[category], value];
+    }
+    setFilters(newFilters);
+    onFilterChange(newFilters);
   };
 
   const clearFilters = () => {
-    setFilters({
+    const clearedFilters = {
       gpa: [],
       experience: [],
       graduationYear: []
-    });
+    };
+    setFilters(clearedFilters);
+    onFilterChange(clearedFilters);
   };
 
-  // Notify parent component whenever filters change
-  useEffect(() => {
-    onFilterChange(filters);
-  }, [filters, onFilterChange]);
-
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -93,8 +89,7 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const toggleDropdown = (category: keyof typeof isOpen, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const toggleDropdown = (category: keyof typeof isOpen) => {
     setIsOpen(prev => ({
       ...prev,
       [category]: !prev[category]
@@ -102,109 +97,106 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
   };
 
   return (
-    <div className="mb-8 flex flex-col gap-4">
-      <div className="flex gap-6">
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-4">
         {/* GPA Filter */}
-        <div className="flex-1 filter-dropdown relative">
-          <label className="block text-sm font-medium text-foreground mb-2">GPA Range</label>
+        <div className="relative filter-dropdown">
           <button
-            onClick={(e) => toggleDropdown('gpa', e)}
-            className="w-full bg-card text-card-foreground rounded-lg shadow-sm border border-border p-3 text-left flex justify-between items-center hover:bg-accent hover:text-accent-foreground"
+            onClick={() => toggleDropdown('gpa')}
+            className="btn btn-secondary"
           >
-            <span className="text-sm">
-              {filters.gpa.length ? `${filters.gpa.length} selected` : 'Select GPA ranges'}
-            </span>
-            <svg className={`w-4 h-4 transition-transform ${isOpen.gpa ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            GPA Range
           </button>
           {isOpen.gpa && (
-            <div className="absolute z-10 mt-1 w-full bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
-              {GPA_RANGES.map((range) => (
-                <label key={range} className="flex items-center px-3 py-2 hover:bg-accent hover:text-accent-foreground">
-                  <input
-                    type="checkbox"
-                    checked={filters.gpa.includes(range)}
-                    onChange={() => handleFilterChange('gpa', range)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">{range}</span>
-                </label>
-              ))}
+            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div className="py-1">
+                {GPA_RANGES.map((range) => (
+                  <label
+                    key={range}
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.gpa.includes(range)}
+                      onChange={() => handleFilterChange('gpa', range)}
+                      className="mr-2"
+                    />
+                    {range}
+                  </label>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
         {/* Experience Filter */}
-        <div className="flex-1 filter-dropdown relative">
-          <label className="block text-sm font-medium text-foreground mb-2">Years of Experience</label>
+        <div className="relative filter-dropdown">
           <button
-            onClick={(e) => toggleDropdown('experience', e)}
-            className="w-full bg-card text-card-foreground rounded-lg shadow-sm border border-border p-3 text-left flex justify-between items-center hover:bg-accent hover:text-accent-foreground"
+            onClick={() => toggleDropdown('experience')}
+            className="btn btn-secondary"
           >
-            <span className="text-sm">
-              {filters.experience.length ? `${filters.experience.length} selected` : 'Select experience ranges'}
-            </span>
-            <svg className={`w-4 h-4 transition-transform ${isOpen.experience ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            Years of Experience
           </button>
           {isOpen.experience && (
-            <div className="absolute z-10 mt-1 w-full bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
-              {EXPERIENCE_RANGES.map((range) => (
-                <label key={range} className="flex items-center px-3 py-2 hover:bg-accent hover:text-accent-foreground">
-                  <input
-                    type="checkbox"
-                    checked={filters.experience.includes(range)}
-                    onChange={() => handleFilterChange('experience', range)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">{range} years</span>
-                </label>
-              ))}
+            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div className="py-1">
+                {EXPERIENCE_RANGES.map((range) => (
+                  <label
+                    key={range}
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.experience.includes(range)}
+                      onChange={() => handleFilterChange('experience', range)}
+                      className="mr-2"
+                    />
+                    {range}
+                  </label>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
         {/* Graduation Year Filter */}
-        <div className="flex-1 filter-dropdown relative">
-          <label className="block text-sm font-medium text-foreground mb-2">Graduation Year</label>
+        <div className="relative filter-dropdown">
           <button
-            onClick={(e) => toggleDropdown('graduationYear', e)}
-            className="w-full bg-card text-card-foreground rounded-lg shadow-sm border border-border p-3 text-left flex justify-between items-center hover:bg-accent hover:text-accent-foreground"
+            onClick={() => toggleDropdown('graduationYear')}
+            className="btn btn-secondary"
           >
-            <span className="text-sm">
-              {filters.graduationYear.length ? `${filters.graduationYear.length} selected` : 'Select graduation years'}
-            </span>
-            <svg className={`w-4 h-4 transition-transform ${isOpen.graduationYear ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            Graduation Year
           </button>
           {isOpen.graduationYear && (
-            <div className="absolute z-10 mt-1 w-full bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
-              {graduationYears.map((year) => (
-                <label key={year} className="flex items-center px-3 py-2 hover:bg-accent hover:text-accent-foreground">
-                  <input
-                    type="checkbox"
-                    checked={filters.graduationYear.includes(year)}
-                    onChange={() => handleFilterChange('graduationYear', year)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">{year}</span>
-                </label>
-              ))}
+            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div className="py-1">
+                {graduationYears.map((year) => (
+                  <label
+                    key={year}
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.graduationYear.includes(year)}
+                      onChange={() => handleFilterChange('graduationYear', year)}
+                      className="mr-2"
+                    />
+                    {year}
+                  </label>
+                ))}
+              </div>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Clear Filters Button */}
-      <button
-        onClick={clearFilters}
-        className="self-end px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Clear Filters
-      </button>
+        {/* Clear Filters Button */}
+        <button
+          onClick={clearFilters}
+          className="btn btn-secondary"
+        >
+          Clear Filters
+        </button>
+      </div>
     </div>
   );
 } 
