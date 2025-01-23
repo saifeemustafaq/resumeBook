@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { students } from './data/students';
 import StudentCard from './components/StudentCard';
 import FilterSection, { FilterState } from './components/FilterSection';
 
 export default function Home() {
+  const router = useRouter();
   const [filters, setFilters] = useState<FilterState>({
     gpa: [],
     experience: [],
@@ -40,23 +42,33 @@ export default function Home() {
   }, [filters]);
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen">
       {/* Header with login buttons */}
-      <header className="max-w-[1200px] mx-auto flex justify-between items-center mb-12">
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors">
-          Student Login
-        </button>
-        <h1 className="text-3xl font-bold text-center">CMU Resume Book</h1>
-        <button className="bg-gray-800 text-white px-6 py-2 rounded-md hover:bg-gray-900 transition-colors">
-          Admin Login
-        </button>
+      <header className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+          <button 
+            onClick={() => router.push('/student-login')}
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6"
+          >
+            Student Login
+          </button>
+          <h1 className="text-3xl font-bold text-foreground">CMU Resume Book</h1>
+          <button 
+            onClick={() => router.push('/admin-login')}
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-6"
+          >
+            Admin Login
+          </button>
+        </div>
       </header>
 
       {/* Divider */}
-      <div className="max-w-[1200px] mx-auto w-full h-px bg-gray-200 dark:bg-gray-700 mb-12"></div>
+      <div className="container mx-auto">
+        <div className="h-px bg-border"></div>
+      </div>
 
       {/* Filter Section */}
-      <div className="max-w-[1200px] mx-auto">
+      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <FilterSection 
           students={students}
           onFilterChange={setFilters}
@@ -64,8 +76,8 @@ export default function Home() {
       </div>
 
       {/* Grid of student cards */}
-      <div className="max-w-[1200px] mx-auto">
-        <div className="grid grid-cols-[repeat(auto-fit,250px)] gap-5 justify-center">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredStudents.map((student) => (
             <StudentCard key={student.id} {...student} />
           ))}

@@ -1,0 +1,1 @@
+import "dotenv/config"; import connectDB from "./app/lib/db"; import { User } from "./app/models/User"; async function checkUsers() { try { await connectDB(); const users = await User.find({}); console.log("Found users:", users); process.exit(0); } catch (error) { console.error("Error:", error); process.exit(1); } } checkUsers();

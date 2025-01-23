@@ -1,19 +1,22 @@
-
 # Carnegie Mellon Resume Book - Development Specification
 
 ## Core Authentication
-- Implement Google OAuth as the sole authentication method for students
-- Create separate admin authentication system using email/password
+- Implement custom email/password authentication system
+- Admin-generated credentials for initial access
+- Mandatory password reset on first login
+- Password reset only through admin intervention
 
 ## Student Interface Requirements
 
 ### Access Control
-- Route protected behind Google OAuth authentication
+- Route protected behind custom authentication
 - Auto-redirect unauthenticated users to login
+- Force password reset on first login
+- Session management with appropriate timeouts
 
 ### Form Interface
 Create a form with the following fields:
-- Email (read-only, auto-populated from Google OAuth)
+- Email (read-only, provided by admin)
 - Resume upload field (PDF only)
 - Profile picture upload (1:1 aspect ratio enforced)
 - Name field (text)
@@ -75,6 +78,21 @@ Design responsive grid layout with cards containing:
 - Implement session management
 - Add password change functionality
 
+### User Management
+Create interface for:
+- Add new users with auto-generated temporary passwords
+- View all users in a table format with:
+  - User name
+  - Email ID
+  - Account status
+  - Last login timestamp
+  - Password reset button
+  - Delete user button
+  - Disable user button
+- Bulk user import capability
+- Password reset functionality
+- User account status management
+
 ### Profile Management
 Create interface for:
 - Viewing all submitted student profiles
@@ -94,6 +112,7 @@ Implement functions for:
 - Add audit logging for admin actions
 - Enforce strong password requirements
 - Add 2FA option for admin accounts
+- Log all password resets and user management actions
 
 ## Technical Constraints
 - All student data must pass through admin approval before public display
@@ -101,6 +120,9 @@ Implement functions for:
 - Implement proper error handling and user feedback
 - Ensure responsive design across all interfaces
 - Add proper loading states and error boundaries
+- Use Azure Blob Storage for file storage (resumes and profile pictures)
+- Implement proper Azure Storage security and access controls
+- Set up Azure Storage container with appropriate CORS policies
 
 ## Data Validation Rules
 - Enforce PDF-only for resumes
@@ -109,7 +131,7 @@ Implement functions for:
 - Add GPA range validation (1.0-4.04)
 - Ensure all required fields are filled before submission
 
-Tech Stack: Use MongoDB, NextJS, and TailwindCSS
+Tech Stack: Use MongoDB, NextJS, TailwindCSS, and Azure Storage
 
 
 @app 

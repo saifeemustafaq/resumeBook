@@ -106,10 +106,10 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
       <div className="flex gap-6">
         {/* GPA Filter */}
         <div className="flex-1 filter-dropdown relative">
-          <label className="block text-sm font-medium mb-2">GPA Range</label>
+          <label className="block text-sm font-medium text-foreground mb-2">GPA Range</label>
           <button
             onClick={(e) => toggleDropdown('gpa', e)}
-            className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-left flex justify-between items-center"
+            className="w-full bg-card text-card-foreground rounded-lg shadow-sm border border-border p-3 text-left flex justify-between items-center hover:bg-accent hover:text-accent-foreground"
           >
             <span className="text-sm">
               {filters.gpa.length ? `${filters.gpa.length} selected` : 'Select GPA ranges'}
@@ -119,9 +119,9 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
             </svg>
           </button>
           {isOpen.gpa && (
-            <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+            <div className="absolute z-10 mt-1 w-full bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
               {GPA_RANGES.map((range) => (
-                <label key={range} className="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <label key={range} className="flex items-center px-3 py-2 hover:bg-accent hover:text-accent-foreground">
                   <input
                     type="checkbox"
                     checked={filters.gpa.includes(range)}
@@ -137,10 +137,10 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
 
         {/* Experience Filter */}
         <div className="flex-1 filter-dropdown relative">
-          <label className="block text-sm font-medium mb-2">Years of Experience</label>
+          <label className="block text-sm font-medium text-foreground mb-2">Years of Experience</label>
           <button
             onClick={(e) => toggleDropdown('experience', e)}
-            className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-left flex justify-between items-center"
+            className="w-full bg-card text-card-foreground rounded-lg shadow-sm border border-border p-3 text-left flex justify-between items-center hover:bg-accent hover:text-accent-foreground"
           >
             <span className="text-sm">
               {filters.experience.length ? `${filters.experience.length} selected` : 'Select experience ranges'}
@@ -150,9 +150,9 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
             </svg>
           </button>
           {isOpen.experience && (
-            <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+            <div className="absolute z-10 mt-1 w-full bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
               {EXPERIENCE_RANGES.map((range) => (
-                <label key={range} className="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <label key={range} className="flex items-center px-3 py-2 hover:bg-accent hover:text-accent-foreground">
                   <input
                     type="checkbox"
                     checked={filters.experience.includes(range)}
@@ -168,10 +168,10 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
 
         {/* Graduation Year Filter */}
         <div className="flex-1 filter-dropdown relative">
-          <label className="block text-sm font-medium mb-2">Graduation Year</label>
+          <label className="block text-sm font-medium text-foreground mb-2">Graduation Year</label>
           <button
             onClick={(e) => toggleDropdown('graduationYear', e)}
-            className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-left flex justify-between items-center"
+            className="w-full bg-card text-card-foreground rounded-lg shadow-sm border border-border p-3 text-left flex justify-between items-center hover:bg-accent hover:text-accent-foreground"
           >
             <span className="text-sm">
               {filters.graduationYear.length ? `${filters.graduationYear.length} selected` : 'Select graduation years'}
@@ -181,9 +181,9 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
             </svg>
           </button>
           {isOpen.graduationYear && (
-            <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+            <div className="absolute z-10 mt-1 w-full bg-card text-card-foreground rounded-lg shadow-lg border border-border py-1">
               {graduationYears.map((year) => (
-                <label key={year} className="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <label key={year} className="flex items-center px-3 py-2 hover:bg-accent hover:text-accent-foreground">
                   <input
                     type="checkbox"
                     checked={filters.graduationYear.includes(year)}
@@ -201,7 +201,7 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
       {/* Clear Filters Button */}
       <button
         onClick={clearFilters}
-        className="self-end px-4 py-2 text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+        className="self-end px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         Clear Filters
       </button>
