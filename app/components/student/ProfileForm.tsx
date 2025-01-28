@@ -11,15 +11,9 @@ import {
   Stack,
   Alert,
   IconButton,
-  Avatar,
-  CircularProgress
+  Avatar
 } from '@mui/material';
 import { CloudUpload as CloudUploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
 
 interface ProfileFormData {
   name: string;
@@ -35,272 +29,331 @@ interface ProfileFormData {
   profilePicture: File | null;
 }
 
-const schema = yup.object().shape({
-  name: yup.string().required('Name is required'),
-  schoolName: yup.string().required('School name is required'),
-  gpa: yup.number()
-    .required('GPA is required')
-    .min(1.0, 'GPA must be at least 1.0')
-    .max(4.04, 'GPA cannot exceed 4.04'),
-  yearsOfExperience: yup.number()
-    .required('Years of experience is required')
-    .min(0, 'Years cannot be negative'),
-  graduationDate: yup.date().required('Graduation date is required'),
-  linkedinUrl: yup.string()
-    .required('LinkedIn URL is required')
-    .url('Must be a valid URL')
-    .matches(/linkedin\.com/, 'Must be a LinkedIn URL'),
-  bio: yup.string()
-    .required('Bio is required')
-    .max(100, 'Bio cannot exceed 100 characters'),
-});
-
 export default function ProfileForm() {
-  const [loading, setLoading] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState('');
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [resume, setResume] = useState<File | null>(null);
-
-  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      name: '',
-      schoolName: '',
-      gpa: '',
-      yearsOfExperience: '',
-      graduationDate: null,
-      linkedinUrl: '',
-      bio: '',
-    }
+  const [formData, setFormData] = useState<ProfileFormData>({
+    name: '',
+    schoolName: '',
+    gpa: 0,
+    yearsOfExperience: 0,
+    graduationDate: '',
+    linkedinUrl: '',
+    bio: '',
+    resumeUrl: '',
+    profilePictureUrl: '',
+    resume: null,
+    profilePicture: null,
   });
 
-  // Auto-save functionality
-  const formValues = watch();
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      handleAutoSave();
-    }, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [formValues]);
+  const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
+  const [previewUrls, setPreviewUrls] = useState({
+    profilePicture: '',
+    resume: '',
+  });
 
-  const handleAutoSave = async () => {
+  const validateForm = () => {
+    const newErrors: Partial<Record<keyof ProfileFormData, string>> = {};
+
+    if (!formData.name) newErrors.name = 'Name is required';
+    if (!formData.schoolName) newErrors.schoolName = 'School name is required';
+    if (formData.gpa < 1.0 || formData.gpa > 4.04) newErrors.gpa = 'GPA must be between 1.0 and 4.04';
+    if (formData.yearsOfExperience < 0) newErrors.yearsOfExperience = 'Years of experience must be positive';
+    if (!formData.graduationDate) newErrors.graduationDate = 'Graduation date is required';
+    if (formData.linkedinUrl && !formData.linkedinUrl.includes('linkedin.com')) {
+      newErrors.linkedinUrl = 'Invalid LinkedIn URL';
+    }
+    if (formData.bio && formData.bio.length > 100) newErrors.bio = 'Bio must be 100 characters or less';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'resume' | 'profilePicture') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     try {
-      setAutoSaveStatus('Saving...');
-      // TODO: Implement auto-save API call
-      setAutoSaveStatus('Saved');
-    } catch (error) {
-      setAutoSaveStatus('Error saving');
-    }
-  };
-
-  const handleProfilePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Implement profile picture upload
-      // Validate 1:1 aspect ratio
-      const img = new Image();
-      img.onload = () => {
-        if (img.width !== img.height) {
-          alert('Please upload an image with 1:1 aspect ratio');
-          return;
-        }
-        // TODO: Upload to Azure Blob Storage
-      };
-      img.src = URL.createObjectURL(file);
-    }
-  };
-
-  const handleResumeChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (!file.type.includes('pdf')) {
-        alert('Please upload a PDF file');
+      if (type === 'resume' && !file.type.includes('pdf')) {
+        setErrors(prev => ({ ...prev, resume: 'Only PDF files are allowed' }));
         return;
       }
-      setResume(file);
-      // TODO: Upload to Azure Blob Storage
+
+      if (type === 'profilePicture' && !file.type.includes('image')) {
+        setErrors(prev => ({ ...prev, profilePicture: 'Only image files are allowed' }));
+        return;
+      }
+
+      // Upload to Azure Storage
+      const url = await uploadFile(
+        file,
+        type === 'resume' ? 'resumes' : 'profiles',
+        'user@example.com' // Replace with actual user email from session
+      );
+
+      // If there was a previous file, delete it
+      if (type === 'resume' && formData.resumeUrl) {
+        await deleteFile(formData.resumeUrl);
+      } else if (type === 'profilePicture' && formData.profilePictureUrl) {
+        await deleteFile(formData.profilePictureUrl);
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        [type]: file,
+        [`${type}Url`]: url
+      }));
+
+      // Set preview for UI
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewUrls(prev => ({ ...prev, [type]: previewUrl }));
+
+      // Clear any previous errors
+      setErrors(prev => ({ ...prev, [type]: undefined }));
+    } catch (error) {
+      if (error instanceof Error) {
+        setErrors(prev => ({ ...prev, [type]: error.message }));
+      } else {
+        setErrors(prev => ({ ...prev, [type]: 'Failed to upload file' }));
+      }
     }
   };
 
-  const onSubmit = async (data: any) => {
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
     try {
-      // TODO: Implement form submission
-      console.log(data);
+      const profileData = {
+        name: formData.name,
+        schoolName: formData.schoolName,
+        gpa: formData.gpa,
+        yearsOfExperience: formData.yearsOfExperience,
+        graduationDate: formData.graduationDate,
+        linkedinUrl: formData.linkedinUrl,
+        bio: formData.bio,
+        resumeUrl: formData.resumeUrl,
+        profilePictureUrl: formData.profilePictureUrl,
+      };
+
+      const response = await fetch('/api/student/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      if (!response.ok) throw new Error('Failed to save profile');
+      // Handle success (e.g., show success message)
     } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+      console.error('Error saving profile:', error);
+      // Handle error (e.g., show error message)
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete your profile?')) {
-      try {
-        // TODO: Implement profile deletion
-      } catch (error) {
-        console.error(error);
+    try {
+      // Delete files from Azure Storage
+      if (formData.resumeUrl) {
+        await deleteFile(formData.resumeUrl);
       }
+      if (formData.profilePictureUrl) {
+        await deleteFile(formData.profilePictureUrl);
+      }
+
+      const response = await fetch('/api/student/profile', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete profile');
+      
+      // Reset form
+      setFormData({
+        name: '',
+        schoolName: '',
+        gpa: 0,
+        yearsOfExperience: 0,
+        graduationDate: '',
+        linkedinUrl: '',
+        bio: '',
+        resumeUrl: '',
+        profilePictureUrl: '',
+        resume: null,
+        profilePicture: null,
+      });
+      setPreviewUrls({ profilePicture: '', resume: '' });
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+      // Handle error
     }
   };
 
   return (
     <Container maxWidth="md">
       <Paper elevation={2} sx={{ p: 4, mt: 4 }}>
-        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Student Profile
-          </Typography>
-
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Stack spacing={3}>
-            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar
-                src={profilePicture || ''}
-                sx={{ width: 100, height: 100 }}
-              />
-              <Button variant="contained" component="label">
-                Upload Picture
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleProfilePictureChange}
-                />
-              </Button>
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <Button variant="contained" component="label">
-                Upload Resume (PDF)
-                <input
-                  type="file"
-                  hidden
-                  accept=".pdf"
-                  onChange={handleResumeChange}
-                />
-              </Button>
-              {resume && <Typography variant="caption" display="block">{resume.name}</Typography>}
-            </Box>
-
-            <Controller
+            <TextField
+              label="Name"
               name="name"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="Name"
-                  error={!!errors.name}
-                  helperText={errors.name?.message}
-                  sx={{ mb: 2 }}
-                />
-              )}
+              value={formData.name}
+              onChange={handleInputChange}
+              error={!!errors.name}
+              helperText={errors.name}
+              fullWidth
+              required
             />
 
-            <Controller
+            <TextField
+              label="School Name"
               name="schoolName"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="School Name"
-                  error={!!errors.schoolName}
-                  helperText={errors.schoolName?.message}
-                  sx={{ mb: 2 }}
-                />
-              )}
+              value={formData.schoolName}
+              onChange={handleInputChange}
+              error={!!errors.schoolName}
+              helperText={errors.schoolName}
+              fullWidth
+              required
             />
 
-            <Controller
+            <TextField
+              label="GPA"
               name="gpa"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="GPA"
-                  type="number"
-                  inputProps={{ step: "0.01", min: "1.0", max: "4.04" }}
-                  error={!!errors.gpa}
-                  helperText={errors.gpa?.message}
-                  sx={{ mb: 2 }}
-                />
-              )}
+              type="number"
+              inputProps={{ step: "0.01", min: "1.0", max: "4.04" }}
+              value={formData.gpa}
+              onChange={handleInputChange}
+              error={!!errors.gpa}
+              helperText={errors.gpa}
+              fullWidth
+              required
             />
 
-            <Controller
+            <TextField
+              label="Years of Experience"
               name="yearsOfExperience"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="Years of Experience"
-                  type="number"
-                  error={!!errors.yearsOfExperience}
-                  helperText={errors.yearsOfExperience?.message}
-                  sx={{ mb: 2 }}
-                />
-              )}
+              type="number"
+              inputProps={{ min: "0" }}
+              value={formData.yearsOfExperience}
+              onChange={handleInputChange}
+              error={!!errors.yearsOfExperience}
+              helperText={errors.yearsOfExperience}
+              fullWidth
+              required
             />
 
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Controller
-                name="graduationDate"
-                control={control}
-                render={({ field }) => (
-                  <DatePicker
-                    {...field}
-                    label="Graduation Date"
-                    views={['year', 'month']}
-                    sx={{ mb: 2, width: '100%' }}
-                  />
-                )}
-              />
-            </LocalizationProvider>
+            <TextField
+              label="Graduation Date"
+              name="graduationDate"
+              type="month"
+              value={formData.graduationDate}
+              onChange={handleInputChange}
+              error={!!errors.graduationDate}
+              helperText={errors.graduationDate}
+              fullWidth
+              required
+              InputLabelProps={{ shrink: true }}
+            />
 
-            <Controller
+            <TextField
+              label="LinkedIn URL"
               name="linkedinUrl"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="LinkedIn URL"
-                  error={!!errors.linkedinUrl}
-                  helperText={errors.linkedinUrl?.message}
-                  sx={{ mb: 2 }}
-                />
-              )}
+              value={formData.linkedinUrl}
+              onChange={handleInputChange}
+              error={!!errors.linkedinUrl}
+              helperText={errors.linkedinUrl}
+              fullWidth
             />
 
-            <Controller
+            <TextField
+              label="Bio"
               name="bio"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="Bio"
-                  multiline
-                  rows={3}
-                  error={!!errors.bio}
-                  helperText={errors.bio?.message ? errors.bio.message : `${field.value?.length || 0}/100`}
-                  inputProps={{ maxLength: 100 }}
-                  sx={{ mb: 2 }}
-                />
-              )}
+              value={formData.bio}
+              onChange={handleInputChange}
+              error={!!errors.bio}
+              helperText={errors.bio ? errors.bio : `${formData.bio.length}/100 characters`}
+              multiline
+              rows={4}
+              fullWidth
             />
+
+            <Box>
+              <input
+                type="file"
+                accept="image/*"
+                id="profile-picture-input"
+                onChange={(e) => handleFileChange(e, 'profilePicture')}
+                style={{ display: 'none' }}
+              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {previewUrls.profilePicture ? (
+                  <Avatar
+                    src={previewUrls.profilePicture}
+                    sx={{ width: 100, height: 100 }}
+                  />
+                ) : (
+                  <Avatar sx={{ width: 100, height: 100 }} />
+                )}
+                <Box>
+                  <Button
+                    component="label"
+                    htmlFor="profile-picture-input"
+                    variant="outlined"
+                    startIcon={<CloudUploadIcon />}
+                  >
+                    Upload Profile Picture
+                  </Button>
+                  {errors.profilePicture && (
+                    <Typography color="error" variant="caption" display="block" sx={{ mt: 1 }}>
+                      {errors.profilePicture}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
+            <Box>
+              <input
+                type="file"
+                accept=".pdf"
+                id="resume-input"
+                onChange={(e) => handleFileChange(e, 'resume')}
+                style={{ display: 'none' }}
+              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Button
+                  component="label"
+                  htmlFor="resume-input"
+                  variant="outlined"
+                  startIcon={<CloudUploadIcon />}
+                >
+                  Upload Resume (PDF)
+                </Button>
+                {formData.resume && (
+                  <Typography variant="body2">
+                    {formData.resume.name}
+                  </Typography>
+                )}
+              </Box>
+              {errors.resume && (
+                <Typography color="error" variant="caption" display="block" sx={{ mt: 1 }}>
+                  {errors.resume}
+                </Typography>
+              )}
+            </Box>
           </Stack>
 
           <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
             <Button
               type="submit"
               variant="contained"
-              disabled={loading}
+              color="primary"
+              size="large"
             >
-              {loading ? <CircularProgress size={24} /> : 'Save Profile'}
+              Save Profile
             </Button>
             <Button
               type="button"
@@ -309,15 +362,10 @@ export default function ProfileForm() {
               size="large"
               onClick={handleDelete}
               startIcon={<DeleteIcon />}
-              disabled={loading}
             >
               Delete Profile
             </Button>
           </Box>
-
-          <Typography variant="caption" color="text.secondary">
-            {autoSaveStatus}
-          </Typography>
         </Box>
       </Paper>
     </Container>
