@@ -3,6 +3,7 @@
 import { Box, Container, Typography, Paper } from '@mui/material';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import UserManagementTable from '../components/admin/UserManagementTable';
+import StudentProfilesTable from '../components/admin/StudentProfilesTable';
 import ChangePasswordSection from '../components/auth/ChangePasswordSection';
 
 function AdminDashboardContent() {
@@ -17,6 +18,9 @@ function AdminDashboardContent() {
             User Management
           </Typography>
           <UserManagementTable />
+        </Paper>
+        <Paper sx={{ p: 3, mt: 2 }}>
+          <StudentProfilesTable />
         </Paper>
         <ChangePasswordSection />
       </Box>
