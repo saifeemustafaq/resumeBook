@@ -1,22 +1,45 @@
-import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
-import ProfileForm from '../components/student/ProfileForm';
+'use client';
 
-export default async function StudentDashboard() {
-  const session = await getServerSession();
-  
-  if (!session?.user) {
-    redirect('/student-login');
-  }
+import { Container, Paper, Typography } from '@mui/material';
+import ProfileForm from '../components/student/ProfileForm';
+import ChangePasswordSection from '../components/auth/ChangePasswordSection';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function StudentDashboard() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/verify');
+        const data = await response.json();
+        
+        if (!response.ok || data.user?.role !== 'student') {
+          router.push('/student-login');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        router.push('/student-login');
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="py-10">
-        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Student Profile</h1>
-          <ProfileForm />
-        </div>
-      </main>
-    </div>
+    <Container maxWidth="md">
+      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Student Dashboard
+        </Typography>
+        <Typography variant="body1" paragraph align="center" color="text.secondary">
+          Manage your profile and resume information
+        </Typography>
+        <ProfileForm />
+      </Paper>
+      <ChangePasswordSection />
+    </Container>
   );
 } 

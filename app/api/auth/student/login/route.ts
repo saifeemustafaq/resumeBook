@@ -65,15 +65,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate JWT token
+    const tokenPayload = { 
+      userId: student._id,
+      email: student.email,
+      role: 'student',
+      isFirstLogin: student.isFirstLogin,
+      iat: Math.floor(Date.now() / 1000) // Explicitly set issued at time
+    };
+    console.log('Token payload:', tokenPayload);
+
     const token = jwt.sign(
-      { 
-        userId: student._id,
-        email: student.email,
-        role: 'student',
-        isFirstLogin: student.isFirstLogin
-      },
+      tokenPayload,
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { 
+        expiresIn: '24h',
+        algorithm: 'HS256'
+      }
     );
     console.log('JWT token generated successfully');
 
@@ -92,14 +99,17 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Set secure cookie
-    response.cookies.set('auth-token', token, {
+    // Set secure cookie with explicit domain and path
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 // 24 hours
-    });
+      maxAge: 60 * 60 * 24, // 24 hours
+    };
+    console.log('Setting cookie with options:', cookieOptions);
+    
+    response.cookies.set('auth-token', token, cookieOptions);
     console.log('Auth cookie set');
 
     return response;

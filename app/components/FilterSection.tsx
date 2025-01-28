@@ -15,7 +15,7 @@ interface FilterSectionProps {
   onFilterChange: (filters: FilterState) => void;
   students: Array<{
     gpa: number;
-    experience: number;
+    yearsOfExperience: number;
     graduationDate: string;
   }>;
 }

@@ -136,8 +136,20 @@ export default function PasswordResetForm() {
         throw new Error(data.error || 'Password reset failed');
       }
 
-      // Redirect to admin dashboard on success
-      router.push('/admin-dashboard');
+      // Get user role from verification endpoint
+      const verifyResponse = await fetch('/api/auth/verify', {
+        credentials: 'include'
+      });
+      
+      if (!verifyResponse.ok) {
+        throw new Error('Failed to verify user role');
+      }
+      
+      const verifyData = await verifyResponse.json();
+      const userRole = verifyData.user.role;
+
+      // Redirect based on user role
+      router.push(userRole === 'admin' ? '/admin-dashboard' : '/student-dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

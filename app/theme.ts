@@ -66,6 +66,41 @@ const theme = createTheme({
         variant: 'outlined',
         size: 'small',
       },
+      styleOverrides: {
+        root: {
+          '& .MuiInputLabel-root': {
+            transform: 'translate(14px, -9px) scale(0.75)',
+            '&.Mui-focused': {
+              transform: 'translate(14px, -9px) scale(0.75)',
+            },
+            '&[data-shrink="true"]': {
+              transform: 'translate(14px, -9px) scale(0.75)',
+            },
+            backgroundColor: '#FFFFFF',
+            padding: '0 4px',
+          },
+          '& .MuiOutlinedInput-root': {
+            '& fieldset': {
+              borderColor: '#E5E7EB',
+              borderWidth: '1px',
+              top: 0,
+              '& legend': {
+                display: 'none',
+              },
+            },
+            '&:hover fieldset': {
+              borderColor: '#3B82F6',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#3B82F6',
+              borderWidth: '1px',
+            },
+          },
+          '& .MuiInputBase-input': {
+            padding: '10px 14px',
+          },
+        },
+      },
     },
     MuiCard: {
       styleOverrides: {

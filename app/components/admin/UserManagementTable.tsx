@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Table,
   TableBody,
@@ -13,8 +15,9 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import { Delete, Edit, Lock, LockOpen } from '@mui/icons-material';
-import { useState } from 'react';
+import { Delete, Edit, Lock, LockOpen, Add } from '@mui/icons-material';
+import { useState, useEffect } from 'react';
+import CreateUserDialog from './CreateUserDialog';
 
 interface User {
   id: string;
@@ -27,6 +30,22 @@ interface User {
 export default function UserManagementTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/users');
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -89,7 +108,7 @@ export default function UserManagementTable() {
         body: formData,
       });
       if (!response.ok) throw new Error('Failed to import users');
-      // Refresh users list
+      await fetchUsers(); // Refresh users list after import
     } catch (error) {
       console.error('Error importing users:', error);
     }
@@ -107,6 +126,14 @@ export default function UserManagementTable() {
           sx={{ width: 300 }}
         />
         <Box>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setCreateDialogOpen(true)}
+            sx={{ mr: 1 }}
+          >
+            Create User
+          </Button>
           <Button
             variant="contained"
             component="label"
@@ -156,8 +183,8 @@ export default function UserManagementTable() {
           <TableBody>
             {users
               .filter(user => 
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchTerm.toLowerCase())
+                (user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user?.email?.toLowerCase().includes(searchTerm.toLowerCase())) ?? false
               )
               .map((user) => (
                 <TableRow key={user.id}>
@@ -200,6 +227,12 @@ export default function UserManagementTable() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <CreateUserDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onUserCreated={fetchUsers}
+      />
     </Box>
   );
 } 

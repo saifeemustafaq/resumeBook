@@ -3,6 +3,7 @@
 import { Box, Container, Typography, Paper } from '@mui/material';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import UserManagementTable from '../components/admin/UserManagementTable';
+import ChangePasswordSection from '../components/auth/ChangePasswordSection';
 
 function AdminDashboardContent() {
   return (
@@ -17,6 +18,7 @@ function AdminDashboardContent() {
           </Typography>
           <UserManagementTable />
         </Paper>
+        <ChangePasswordSection />
       </Box>
     </Container>
   );
