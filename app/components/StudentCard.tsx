@@ -1,4 +1,14 @@
 import Image from 'next/image';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Button,
+  Grid,
+  Avatar,
+  Divider
+} from '@mui/material';
 
 interface StudentCardProps {
   profilePic: string;
@@ -24,57 +34,102 @@ export default function StudentCard({
   linkedinUrl,
 }: StudentCardProps) {
   return (
-    <div className="aspect-square w-[250px] bg-card text-card-foreground rounded-lg shadow-sm border border-border p-3 flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <div className="w-12 h-12 border border-border">
-          <Image
-            src={profilePic}
-            alt={`${name}'s profile picture`}
-            width={48}
-            height={48}
-            className="rounded-none object-cover w-full h-full"
-          />
-        </div>
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold truncate text-foreground">{name}</h3>
-          <p className="text-xs text-muted-foreground truncate">{school}</p>
-        </div>
-      </div>
-      
-      <div className="flex justify-between text-[11px] px-1 text-muted-foreground">
-        <div className="truncate">
-          <span className="font-medium text-foreground">GPA:</span> {gpa}
-        </div>
-        <div className="truncate">
-          <span className="font-medium text-foreground">YOE:</span> {experience}y
-        </div>
-        <div className="truncate">
-          <span className="font-medium text-foreground">Grad:</span> {graduationDate}
-        </div>
-      </div>
-      
-      <p className="text-[11px] text-muted-foreground line-clamp-3 flex-grow">
-        {bio}
-      </p>
-      
-      <div className="flex gap-1.5 mt-auto">
-        <a
-          href={resumeLink}
-          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-2 py-0.5 text-center text-[11px] transition-colors"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Card 
+      sx={{ 
+        width: 250,
+        height: 250,
+        display: 'flex',
+        flexDirection: 'column',
+        p: 1.5
+      }}
+    >
+      <CardContent sx={{ p: 0, '&:last-child': { pb: 0 }, flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 48, height: 48, position: 'relative' }}>
+            <Image
+              src={profilePic}
+              alt={`${name}'s profile picture`}
+              fill
+              sizes="(max-width: 48px) 100vw"
+              style={{ 
+                borderRadius: '4px',
+                objectFit: 'cover'
+              }}
+            />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="subtitle2" noWrap>
+              {name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {school}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Grid container spacing={1} sx={{ px: 0.5, fontSize: '0.6875rem' }}>
+          <Grid item xs={4}>
+            <Typography variant="caption" color="text.secondary">
+              <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>GPA:</Box> {gpa}
+            </Typography>
+          </Grid>
+          <Grid item xs={4}>
+            <Typography variant="caption" color="text.secondary">
+              <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>YOE:</Box> {experience}y
+            </Typography>
+          </Grid>
+          <Grid item xs={4}>
+            <Typography variant="caption" color="text.secondary">
+              <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>Grad:</Box> {graduationDate}
+            </Typography>
+          </Grid>
+        </Grid>
+
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            flex: 1
+          }}
         >
-          Resume
-        </a>
-        <a
-          href={linkedinUrl}
-          className="flex-1 border border-primary text-primary hover:bg-primary/10 rounded-md px-2 py-0.5 text-center text-[11px] transition-colors"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          LinkedIn
-        </a>
-      </div>
-    </div>
+          {bio}
+        </Typography>
+
+        <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
+          <Button
+            href={resumeLink}
+            variant="contained"
+            fullWidth
+            size="small"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ 
+              fontSize: '0.6875rem',
+              textTransform: 'none'
+            }}
+          >
+            Resume
+          </Button>
+          <Button
+            href={linkedinUrl}
+            variant="outlined"
+            fullWidth
+            size="small"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ 
+              fontSize: '0.6875rem',
+              textTransform: 'none'
+            }}
+          >
+            LinkedIn
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
   );
 } 

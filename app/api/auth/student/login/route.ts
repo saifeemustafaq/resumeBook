@@ -7,7 +7,7 @@ import { User } from '@/app/models/User';
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
-    console.log('Login attempt for email:', email);
+    console.log('Student login attempt for:', email);
 
     // Validate input
     if (!email || !password) {
@@ -18,35 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Connect to database
-    await connectDB();
-    console.log('Connected to database');
-
-    // Find user
-    const user = await User.findOne({ email, role: 'student' });
-    console.log('User found:', user ? 'Yes' : 'No');
-    
-    if (!user) {
-      console.log('No user found with email:', email);
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
-    console.log('Password valid:', isValidPassword);
-    
-    if (!isValidPassword) {
-      console.log('Invalid password for user:', email);
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
-    }
-
-    // Generate JWT token
+    // Check JWT secret
     if (!process.env.JWT_SECRET) {
       console.error('JWT_SECRET is not defined');
       return NextResponse.json(
@@ -55,12 +27,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Connect to database
+    await connectDB();
+    console.log('Connected to database');
+
+    // Find student user
+    const student = await User.findOne({ email, role: 'student' });
+    console.log('Student found:', student ? 'Yes' : 'No');
+
+    if (!student) {
+      console.log('No student found with email:', email);
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, student.passwordHash);
+    console.log('Password valid:', isValidPassword);
+
+    if (!isValidPassword) {
+      console.log('Invalid password for student:', email);
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      );
+    }
+
+    // Check if account is active
+    if (student.status !== 'active') {
+      console.log('Student account is disabled:', email);
+      return NextResponse.json(
+        { error: 'Account is disabled' },
+        { status: 403 }
+      );
+    }
+
+    // Generate JWT token
     const token = jwt.sign(
       { 
-        userId: user._id,
-        email: user.email,
+        userId: student._id,
+        email: student.email,
         role: 'student',
-        isFirstLogin: user.isFirstLogin
+        isFirstLogin: student.isFirstLogin
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -68,16 +78,16 @@ export async function POST(request: NextRequest) {
     console.log('JWT token generated successfully');
 
     // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    student.lastLogin = new Date();
+    await student.save();
     console.log('Last login updated');
 
     // Create the response
     const response = NextResponse.json(
       { 
         success: true,
-        isFirstLogin: user.isFirstLogin,
-        requiresPasswordReset: user.passwordResetRequired
+        isFirstLogin: student.isFirstLogin,
+        requiresPasswordReset: student.passwordResetRequired
       },
       { status: 200 }
     );
@@ -97,7 +107,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Student login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error. Please try again later.' },
       { status: 500 }
     );
   }

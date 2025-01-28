@@ -4,19 +4,20 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/resume
 
 let isConnected = false;
 
-export async function connect() {
+const connectDB = async () => {
   if (isConnected) {
     return;
   }
 
   try {
-    await mongoose.connect(MONGODB_URI);
+    const db = await mongoose.connect(MONGODB_URI);
     isConnected = true;
     console.log('Connected to MongoDB');
+    return db;
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
     throw error;
   }
-}
+};
 
-export default mongoose; 
+export default connectDB; 

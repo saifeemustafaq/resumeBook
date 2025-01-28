@@ -1,7 +1,7 @@
 import { BlobServiceClient, BlockBlobClient, ContainerClient, BlobSASPermissions } from '@azure/storage-blob';
 
 // Constants
-const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING || '';
+const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER || 'resumebook';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
 const ALLOWED_RESUME_TYPES = ['application/pdf'];
@@ -15,16 +15,25 @@ class StorageValidationError extends Error {
   }
 }
 
-if (!AZURE_STORAGE_CONNECTION_STRING) {
-  throw new Error('Azure Storage Connection String is required');
-}
+let blobServiceClient: BlobServiceClient;
+let containerClient: ContainerClient;
 
-const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
-const containerClient = blobServiceClient.getContainerClient(CONTAINER_NAME);
+// Initialize the clients only when needed
+function initClients() {
+  if (!AZURE_STORAGE_CONNECTION_STRING) {
+    throw new Error('Azure Storage Connection String is required');
+  }
+
+  if (!blobServiceClient) {
+    blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
+    containerClient = blobServiceClient.getContainerClient(CONTAINER_NAME);
+  }
+}
 
 // Initialize container with proper access level
 export async function initializeStorage(): Promise<void> {
   try {
+    initClients();
     await containerClient.createIfNotExists();
   } catch (error) {
     console.error('Failed to initialize storage:', error);
@@ -54,8 +63,8 @@ export async function uploadFile(
   userEmail: string
 ): Promise<string> {
   try {
+    initClients();
     validateFile(file, directory === 'resumes' ? 'resume' : 'profile');
-    await containerClient.createIfNotExists();
 
     const buffer = await file.arrayBuffer();
     const fileExtension = file.name.split('.').pop();
@@ -82,6 +91,7 @@ export async function uploadFile(
 // Delete file with proper error handling
 export async function deleteFile(url: string): Promise<void> {
   try {
+    initClients();
     const blobName = new URL(url).pathname.split('/').pop();
     if (!blobName) throw new Error('Invalid blob URL');
     
@@ -96,6 +106,7 @@ export async function deleteFile(url: string): Promise<void> {
 // Get signed URL for temporary access
 export async function getSignedUrl(url: string, expiryMinutes: number = 60): Promise<string> {
   try {
+    initClients();
     const blobName = new URL(url).pathname.split('/').pop();
     if (!blobName) throw new Error('Invalid blob URL');
 

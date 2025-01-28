@@ -1,20 +1,14 @@
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { initializeStorage } from './lib/storage';
 import "./globals.css";
+import ClientLayout from './ClientLayout';
+import { metadata } from './metadata';
 
 const inter = Inter({
   subsets: ["latin"],
   display: 'swap',
 });
 
-// Initialize storage on app startup
-initializeStorage().catch(console.error);
-
-export const metadata: Metadata = {
-  title: 'CMU Resume Book',
-  description: 'Carnegie Mellon University Resume Book',
-};
+export { metadata };
 
 export default function RootLayout({
   children,
@@ -23,10 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
-        <main className="min-h-screen bg-background">
+      <body className={inter.className}>
+        <ClientLayout>
           {children}
-        </main>
+        </ClientLayout>
       </body>
     </html>
   );

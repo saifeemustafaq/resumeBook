@@ -3,6 +3,15 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { 
+  TextField, 
+  Button, 
+  Alert, 
+  Box, 
+  Typography, 
+  Container,
+  Link as MuiLink
+} from '@mui/material';
 
 interface LoginFormProps {
   userType: 'student' | 'admin';
@@ -30,69 +39,82 @@ export default function LoginForm({ userType }: LoginFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.error || 'Login failed');
       }
 
-      router.push(`/${userType}-dashboard`);
+      if (data.success) {
+        if (data.isFirstLogin || data.requiresPasswordReset) {
+          router.push(`/${userType}/change-password`);
+        } else {
+          router.push(`/${userType}-dashboard`);
+        }
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-4">
-      {error && (
-        <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-          {error}
-        </div>
-      )}
-      
-      <div className="space-y-2">
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email Address
-        </label>
-        <input
+    <Container component="main" maxWidth="xs">
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          width: '100%'
+        }}
+      >
+        {error && (
+          <Alert severity="error" sx={{ width: '100%' }}>
+            {error}
+          </Alert>
+        )}
+        
+        <TextField
           id="email"
+          label="Email Address"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          fullWidth
+          variant="outlined"
         />
-      </div>
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
-        </label>
-        <input
+        <TextField
           id="password"
+          label="Password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          fullWidth
+          variant="outlined"
         />
-      </div>
 
-      <div className="flex items-center justify-between">
-        <Link
-          href="/reset-password"
-          className="text-sm text-blue-600 hover:text-blue-800"
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Link href="/reset-password" passHref>
+            <MuiLink>
+              Forgot password?
+            </MuiLink>
+          </Link>
+        </Box>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          variant="contained"
+          fullWidth
+          sx={{ mt: 1 }}
         >
-          Forgot password?
-        </Link>
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? 'Signing in...' : 'Sign In'}
-      </button>
-    </form>
+          {loading ? 'Signing in...' : 'Sign In'}
+        </Button>
+      </Box>
+    </Container>
   );
 } 

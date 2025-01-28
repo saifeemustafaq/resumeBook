@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { students } from './data/students';
 import StudentCard from './components/StudentCard';
 import FilterSection, { FilterState } from './components/FilterSection';
+import { Button, Container, Box, Typography } from '@mui/material';
 
 export default function Home() {
   const router = useRouter();
@@ -42,47 +43,70 @@ export default function Home() {
   }, [filters]);
 
   return (
-    <div className="min-h-screen">
+    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header with login buttons */}
-      <header className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-          <button 
-            onClick={() => router.push('/student-login')}
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6"
-          >
-            Student Login
-          </button>
-          <h1 className="text-3xl font-bold text-foreground">CMU Resume Book</h1>
-          <button 
-            onClick={() => router.push('/admin-login')}
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-6"
-          >
-            Admin Login
-          </button>
-        </div>
-      </header>
-
-      {/* Divider */}
-      <div className="container mx-auto">
-        <div className="h-px bg-border"></div>
-      </div>
+      <Box component="header" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' }, 
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: { xs: 2, sm: 3 }
+          }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => router.push('/student-login')}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              Student Login
+            </Button>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+              CMU Resume Book
+            </Typography>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => router.push('/admin-login')}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              Admin Login
+            </Button>
+          </Box>
+        </Container>
+      </Box>
 
       {/* Filter Section */}
-      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <FilterSection 
-          students={students}
-          onFilterChange={setFilters}
-        />
-      </div>
+      <Box component="section" sx={{ py: 4 }}>
+        <Container maxWidth="lg">
+          <FilterSection 
+            students={students}
+            onFilterChange={setFilters}
+          />
+        </Container>
+      </Box>
 
       {/* Grid of student cards */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredStudents.map((student) => (
-            <StudentCard key={student.id} {...student} />
-          ))}
-        </div>
-      </div>
-    </div>
+      <Box component="section" sx={{ pb: 8 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
+              xl: 'repeat(4, 1fr)'
+            },
+            gap: 3,
+            justifyItems: 'center'
+          }}>
+            {filteredStudents.map((student) => (
+              <StudentCard key={student.id} {...student} />
+            ))}
+          </Box>
+        </Container>
+      </Box>
+    </Box>
   );
 }

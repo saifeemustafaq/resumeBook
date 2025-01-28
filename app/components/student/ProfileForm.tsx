@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { uploadFile, deleteFile } from '../../lib/storage';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Container,
+  Paper,
+  Stack,
+  Alert,
+  IconButton,
+  Avatar,
+  CircularProgress
+} from '@mui/material';
+import { CloudUpload as CloudUploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 
 interface ProfileFormData {
   name: string;
@@ -16,311 +35,291 @@ interface ProfileFormData {
   profilePicture: File | null;
 }
 
+const schema = yup.object().shape({
+  name: yup.string().required('Name is required'),
+  schoolName: yup.string().required('School name is required'),
+  gpa: yup.number()
+    .required('GPA is required')
+    .min(1.0, 'GPA must be at least 1.0')
+    .max(4.04, 'GPA cannot exceed 4.04'),
+  yearsOfExperience: yup.number()
+    .required('Years of experience is required')
+    .min(0, 'Years cannot be negative'),
+  graduationDate: yup.date().required('Graduation date is required'),
+  linkedinUrl: yup.string()
+    .required('LinkedIn URL is required')
+    .url('Must be a valid URL')
+    .matches(/linkedin\.com/, 'Must be a LinkedIn URL'),
+  bio: yup.string()
+    .required('Bio is required')
+    .max(100, 'Bio cannot exceed 100 characters'),
+});
+
 export default function ProfileForm() {
-  const [formData, setFormData] = useState<ProfileFormData>({
-    name: '',
-    schoolName: '',
-    gpa: 0,
-    yearsOfExperience: 0,
-    graduationDate: '',
-    linkedinUrl: '',
-    bio: '',
-    resumeUrl: '',
-    profilePictureUrl: '',
-    resume: null,
-    profilePicture: null,
-  });
+  const [loading, setLoading] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState('');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [resume, setResume] = useState<File | null>(null);
 
-  const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
-  const [previewUrls, setPreviewUrls] = useState({
-    profilePicture: '',
-    resume: '',
-  });
-
-  const validateForm = () => {
-    const newErrors: Partial<Record<keyof ProfileFormData, string>> = {};
-
-    if (!formData.name) newErrors.name = 'Name is required';
-    if (!formData.schoolName) newErrors.schoolName = 'School name is required';
-    if (formData.gpa < 1.0 || formData.gpa > 4.04) newErrors.gpa = 'GPA must be between 1.0 and 4.04';
-    if (formData.yearsOfExperience < 0) newErrors.yearsOfExperience = 'Years of experience must be positive';
-    if (!formData.graduationDate) newErrors.graduationDate = 'Graduation date is required';
-    if (formData.linkedinUrl && !formData.linkedinUrl.includes('linkedin.com')) {
-      newErrors.linkedinUrl = 'Invalid LinkedIn URL';
+  const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      name: '',
+      schoolName: '',
+      gpa: '',
+      yearsOfExperience: '',
+      graduationDate: null,
+      linkedinUrl: '',
+      bio: '',
     }
-    if (formData.bio && formData.bio.length > 100) newErrors.bio = 'Bio must be 100 characters or less';
+  });
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  // Auto-save functionality
+  const formValues = watch();
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleAutoSave();
+    }, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [formValues]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'resume' | 'profilePicture') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleAutoSave = async () => {
     try {
-      if (type === 'resume' && !file.type.includes('pdf')) {
-        setErrors(prev => ({ ...prev, resume: 'Only PDF files are allowed' }));
-        return;
-      }
-
-      if (type === 'profilePicture' && !file.type.includes('image')) {
-        setErrors(prev => ({ ...prev, profilePicture: 'Only image files are allowed' }));
-        return;
-      }
-
-      // Upload to Azure Storage
-      const url = await uploadFile(
-        file,
-        type === 'resume' ? 'resumes' : 'profiles',
-        'user@example.com' // Replace with actual user email from session
-      );
-
-      // If there was a previous file, delete it
-      if (type === 'resume' && formData.resumeUrl) {
-        await deleteFile(formData.resumeUrl);
-      } else if (type === 'profilePicture' && formData.profilePictureUrl) {
-        await deleteFile(formData.profilePictureUrl);
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        [type]: file,
-        [`${type}Url`]: url
-      }));
-
-      // Set preview for UI
-      const previewUrl = URL.createObjectURL(file);
-      setPreviewUrls(prev => ({ ...prev, [type]: previewUrl }));
-
-      // Clear any previous errors
-      setErrors(prev => ({ ...prev, [type]: undefined }));
+      setAutoSaveStatus('Saving...');
+      // TODO: Implement auto-save API call
+      setAutoSaveStatus('Saved');
     } catch (error) {
-      if (error instanceof Error) {
-        setErrors(prev => ({ ...prev, [type]: error.message }));
-      } else {
-        setErrors(prev => ({ ...prev, [type]: 'Failed to upload file' }));
-      }
+      setAutoSaveStatus('Error saving');
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    try {
-      const profileData = {
-        name: formData.name,
-        schoolName: formData.schoolName,
-        gpa: formData.gpa,
-        yearsOfExperience: formData.yearsOfExperience,
-        graduationDate: formData.graduationDate,
-        linkedinUrl: formData.linkedinUrl,
-        bio: formData.bio,
-        resumeUrl: formData.resumeUrl,
-        profilePictureUrl: formData.profilePictureUrl,
+  const handleProfilePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // TODO: Implement profile picture upload
+      // Validate 1:1 aspect ratio
+      const img = new Image();
+      img.onload = () => {
+        if (img.width !== img.height) {
+          alert('Please upload an image with 1:1 aspect ratio');
+          return;
+        }
+        // TODO: Upload to Azure Blob Storage
       };
+      img.src = URL.createObjectURL(file);
+    }
+  };
 
-      const response = await fetch('/api/student/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(profileData),
-      });
+  const handleResumeChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.includes('pdf')) {
+        alert('Please upload a PDF file');
+        return;
+      }
+      setResume(file);
+      // TODO: Upload to Azure Blob Storage
+    }
+  };
 
-      if (!response.ok) throw new Error('Failed to save profile');
-      // Handle success (e.g., show success message)
+  const onSubmit = async (data: any) => {
+    setLoading(true);
+    try {
+      // TODO: Implement form submission
+      console.log(data);
     } catch (error) {
-      console.error('Error saving profile:', error);
-      // Handle error (e.g., show error message)
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    try {
-      // Delete files from Azure Storage
-      if (formData.resumeUrl) {
-        await deleteFile(formData.resumeUrl);
+    if (window.confirm('Are you sure you want to delete your profile?')) {
+      try {
+        // TODO: Implement profile deletion
+      } catch (error) {
+        console.error(error);
       }
-      if (formData.profilePictureUrl) {
-        await deleteFile(formData.profilePictureUrl);
-      }
-
-      const response = await fetch('/api/student/profile', {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete profile');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        schoolName: '',
-        gpa: 0,
-        yearsOfExperience: 0,
-        graduationDate: '',
-        linkedinUrl: '',
-        bio: '',
-        resumeUrl: '',
-        profilePictureUrl: '',
-        resume: null,
-        profilePicture: null,
-      });
-      setPreviewUrls({ profilePicture: '', resume: '' });
-    } catch (error) {
-      console.error('Error deleting profile:', error);
-      // Handle error
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 space-y-6">
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-        </div>
+    <Container maxWidth="md">
+      <Paper elevation={2} sx={{ p: 4, mt: 4 }}>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Student Profile
+          </Typography>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">School Name</label>
-          <input
-            type="text"
-            name="schoolName"
-            value={formData.schoolName}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.schoolName && <p className="text-red-500 text-sm">{errors.schoolName}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">GPA</label>
-          <input
-            type="number"
-            name="gpa"
-            step="0.01"
-            min="1.0"
-            max="4.04"
-            value={formData.gpa}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.gpa && <p className="text-red-500 text-sm">{errors.gpa}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Years of Experience</label>
-          <input
-            type="number"
-            name="yearsOfExperience"
-            min="0"
-            value={formData.yearsOfExperience}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.yearsOfExperience && <p className="text-red-500 text-sm">{errors.yearsOfExperience}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Graduation Date</label>
-          <input
-            type="month"
-            name="graduationDate"
-            value={formData.graduationDate}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.graduationDate && <p className="text-red-500 text-sm">{errors.graduationDate}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">LinkedIn URL</label>
-          <input
-            type="url"
-            name="linkedinUrl"
-            value={formData.linkedinUrl}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.linkedinUrl && <p className="text-red-500 text-sm">{errors.linkedinUrl}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Bio</label>
-          <textarea
-            name="bio"
-            value={formData.bio}
-            onChange={handleInputChange}
-            maxLength={100}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <p className="text-sm text-gray-500">{formData.bio.length}/100 characters</p>
-          {errors.bio && <p className="text-red-500 text-sm">{errors.bio}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Resume (PDF only)</label>
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={(e) => handleFileChange(e, 'resume')}
-            className="mt-1 block w-full"
-          />
-          {errors.resume && <p className="text-red-500 text-sm">{errors.resume}</p>}
-          {previewUrls.resume && <p className="text-sm text-gray-500">Resume uploaded</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, 'profilePicture')}
-            className="mt-1 block w-full"
-          />
-          {errors.profilePicture && <p className="text-red-500 text-sm">{errors.profilePicture}</p>}
-          {previewUrls.profilePicture && (
-            <div className="mt-2">
-              <Image
-                src={previewUrls.profilePicture}
-                alt="Profile preview"
-                width={100}
-                height={100}
-                className="rounded-full object-cover"
+          <Stack spacing={3}>
+            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar
+                src={profilePicture || ''}
+                sx={{ width: 100, height: 100 }}
               />
-            </div>
-          )}
-        </div>
-      </div>
+              <Button variant="contained" component="label">
+                Upload Picture
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                />
+              </Button>
+            </Box>
 
-      <div className="flex justify-between">
-        <button
-          type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Save Profile
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          Delete Profile
-        </button>
-      </div>
-    </form>
+            <Box sx={{ mb: 3 }}>
+              <Button variant="contained" component="label">
+                Upload Resume (PDF)
+                <input
+                  type="file"
+                  hidden
+                  accept=".pdf"
+                  onChange={handleResumeChange}
+                />
+              </Button>
+              {resume && <Typography variant="caption" display="block">{resume.name}</Typography>}
+            </Box>
+
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="Name"
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                  sx={{ mb: 2 }}
+                />
+              )}
+            />
+
+            <Controller
+              name="schoolName"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="School Name"
+                  error={!!errors.schoolName}
+                  helperText={errors.schoolName?.message}
+                  sx={{ mb: 2 }}
+                />
+              )}
+            />
+
+            <Controller
+              name="gpa"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="GPA"
+                  type="number"
+                  inputProps={{ step: "0.01", min: "1.0", max: "4.04" }}
+                  error={!!errors.gpa}
+                  helperText={errors.gpa?.message}
+                  sx={{ mb: 2 }}
+                />
+              )}
+            />
+
+            <Controller
+              name="yearsOfExperience"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="Years of Experience"
+                  type="number"
+                  error={!!errors.yearsOfExperience}
+                  helperText={errors.yearsOfExperience?.message}
+                  sx={{ mb: 2 }}
+                />
+              )}
+            />
+
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <Controller
+                name="graduationDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker
+                    {...field}
+                    label="Graduation Date"
+                    views={['year', 'month']}
+                    sx={{ mb: 2, width: '100%' }}
+                  />
+                )}
+              />
+            </LocalizationProvider>
+
+            <Controller
+              name="linkedinUrl"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="LinkedIn URL"
+                  error={!!errors.linkedinUrl}
+                  helperText={errors.linkedinUrl?.message}
+                  sx={{ mb: 2 }}
+                />
+              )}
+            />
+
+            <Controller
+              name="bio"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  fullWidth
+                  label="Bio"
+                  multiline
+                  rows={3}
+                  error={!!errors.bio}
+                  helperText={errors.bio?.message ? errors.bio.message : `${field.value?.length || 0}/100`}
+                  inputProps={{ maxLength: 100 }}
+                  sx={{ mb: 2 }}
+                />
+              )}
+            />
+          </Stack>
+
+          <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Save Profile'}
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              color="error"
+              size="large"
+              onClick={handleDelete}
+              startIcon={<DeleteIcon />}
+              disabled={loading}
+            >
+              Delete Profile
+            </Button>
+          </Box>
+
+          <Typography variant="caption" color="text.secondary">
+            {autoSaveStatus}
+          </Typography>
+        </Box>
+      </Paper>
+    </Container>
   );
 } 

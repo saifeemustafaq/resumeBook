@@ -2,6 +2,7 @@
 
 import { Box, Container, Typography, Paper } from '@mui/material';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import UserManagementTable from '../components/admin/UserManagementTable';
 
 function AdminDashboardContent() {
   return (
@@ -12,11 +13,9 @@ function AdminDashboardContent() {
         </Typography>
         <Paper sx={{ p: 3, mt: 2 }}>
           <Typography variant="h6" gutterBottom>
-            Welcome to the admin dashboard
+            User Management
           </Typography>
-          <Typography>
-            Here you can manage users, review profiles, and handle system settings.
-          </Typography>
+          <UserManagementTable />
         </Paper>
       </Box>
     </Container>
@@ -25,7 +24,7 @@ function AdminDashboardContent() {
 
 export default function AdminDashboard() {
   return (
-    <ProtectedRoute allowedRoles={['admin']}>
+    <ProtectedRoute userType="admin">
       <AdminDashboardContent />
     </ProtectedRoute>
   );

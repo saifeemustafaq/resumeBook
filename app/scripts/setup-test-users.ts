@@ -1,11 +1,12 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import connectDB from '../lib/db';
 import { User } from '../models/User';
 
 async function setupTestUsers() {
   try {
-    const mongoose = await connectDB();
+    await connectDB();
     console.log('Connected to MongoDB Atlas');
 
     // Clear existing users

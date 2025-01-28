@@ -2,6 +2,15 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  Box,
+  Link as MuiLink
+} from '@mui/material';
 
 interface HeaderProps {
   userType: 'student' | 'admin';
@@ -27,46 +36,66 @@ export default function Header({ userType }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex-shrink-0">
-            <Link 
-              href="/" 
-              className="text-xl font-bold text-foreground hover:text-primary transition-colors"
+    <AppBar position="sticky" color="default" elevation={1} sx={{ bgcolor: 'background.default' }}>
+      <Container maxWidth="lg">
+        <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3, lg: 4 } }}>
+          <Link href="/" passHref style={{ textDecoration: 'none' }}>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
+                fontWeight: 'bold',
+                color: 'text.primary',
+                '&:hover': { color: 'primary.main' },
+                transition: 'color 0.2s'
+              }}
             >
               CMU Resume Book
-            </Link>
-          </div>
+            </Typography>
+          </Link>
           
-          <div className="flex items-center space-x-4">
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             {userType === 'student' && (
-              <Link
-                href="/student-dashboard"
-                className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Dashboard
+              <Link href="/student-dashboard" passHref style={{ textDecoration: 'none' }}>
+                <Button
+                  color="inherit"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary' }
+                  }}
+                >
+                  Dashboard
+                </Button>
               </Link>
             )}
             
             {userType === 'admin' && (
-              <Link
-                href="/admin-dashboard"
-                className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Dashboard
+              <Link href="/admin-dashboard" passHref style={{ textDecoration: 'none' }}>
+                <Button
+                  color="inherit"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'text.primary' }
+                  }}
+                >
+                  Dashboard
+                </Button>
               </Link>
             )}
             
-            <button
+            <Button
+              variant="contained"
               onClick={handleLogout}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+              sx={{
+                textTransform: 'none',
+                '&:hover': { bgcolor: 'primary.dark' }
+              }}
             >
               Logout
-            </button>
-          </div>
-        </div>
-      </nav>
-    </header>
+            </Button>
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 } 

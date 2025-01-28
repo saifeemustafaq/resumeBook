@@ -1,4 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Box,
+  Button,
+  Popover,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Stack,
+  Paper
+} from '@mui/material';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 interface FilterSectionProps {
   onFilterChange: (filters: FilterState) => void;
@@ -35,11 +46,15 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
     experience: [],
     graduationYear: []
   });
-  
-  const [isOpen, setIsOpen] = useState({
-    gpa: false,
-    experience: false,
-    graduationYear: false
+
+  const [anchorEl, setAnchorEl] = useState<{
+    gpa: HTMLElement | null;
+    experience: HTMLElement | null;
+    graduationYear: HTMLElement | null;
+  }>({
+    gpa: null,
+    experience: null,
+    graduationYear: null
   });
 
   // Extract unique graduation years from students
@@ -71,132 +86,169 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
     };
     setFilters(clearedFilters);
     onFilterChange(clearedFilters);
+    setAnchorEl({
+      gpa: null,
+      experience: null,
+      graduationYear: null
+    });
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.filter-dropdown')) {
-        setIsOpen({
-          gpa: false,
-          experience: false,
-          graduationYear: false
-        });
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  const toggleDropdown = (category: keyof typeof isOpen) => {
-    setIsOpen(prev => ({
+  const handleClick = (event: React.MouseEvent<HTMLElement>, category: keyof typeof anchorEl) => {
+    setAnchorEl(prev => ({
       ...prev,
-      [category]: !prev[category]
+      [category]: event.currentTarget
+    }));
+  };
+
+  const handleClose = (category: keyof typeof anchorEl) => {
+    setAnchorEl(prev => ({
+      ...prev,
+      [category]: null
     }));
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
+    <Box sx={{ mb: 4 }}>
+      <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
         {/* GPA Filter */}
-        <div className="relative filter-dropdown">
-          <button
-            onClick={() => toggleDropdown('gpa')}
-            className="btn btn-secondary"
+        <Box>
+          <Button
+            variant="outlined"
+            onClick={(e) => handleClick(e, 'gpa')}
+            startIcon={<FilterListIcon />}
+            size="small"
           >
-            GPA Range
-          </button>
-          {isOpen.gpa && (
-            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-              <div className="py-1">
+            GPA Range {filters.gpa.length > 0 && `(${filters.gpa.length})`}
+          </Button>
+          <Popover
+            open={Boolean(anchorEl.gpa)}
+            anchorEl={anchorEl.gpa}
+            onClose={() => handleClose('gpa')}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+          >
+            <Paper sx={{ p: 2 }}>
+              <FormGroup>
                 {GPA_RANGES.map((range) => (
-                  <label
+                  <FormControlLabel
                     key={range}
-                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.gpa.includes(range)}
-                      onChange={() => handleFilterChange('gpa', range)}
-                      className="mr-2"
-                    />
-                    {range}
-                  </label>
+                    control={
+                      <Checkbox
+                        checked={filters.gpa.includes(range)}
+                        onChange={() => handleFilterChange('gpa', range)}
+                        size="small"
+                      />
+                    }
+                    label={range}
+                  />
                 ))}
-              </div>
-            </div>
-          )}
-        </div>
+              </FormGroup>
+            </Paper>
+          </Popover>
+        </Box>
 
         {/* Experience Filter */}
-        <div className="relative filter-dropdown">
-          <button
-            onClick={() => toggleDropdown('experience')}
-            className="btn btn-secondary"
+        <Box>
+          <Button
+            variant="outlined"
+            onClick={(e) => handleClick(e, 'experience')}
+            startIcon={<FilterListIcon />}
+            size="small"
           >
-            Years of Experience
-          </button>
-          {isOpen.experience && (
-            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-              <div className="py-1">
+            Experience {filters.experience.length > 0 && `(${filters.experience.length})`}
+          </Button>
+          <Popover
+            open={Boolean(anchorEl.experience)}
+            anchorEl={anchorEl.experience}
+            onClose={() => handleClose('experience')}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+          >
+            <Paper sx={{ p: 2 }}>
+              <FormGroup>
                 {EXPERIENCE_RANGES.map((range) => (
-                  <label
+                  <FormControlLabel
                     key={range}
-                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.experience.includes(range)}
-                      onChange={() => handleFilterChange('experience', range)}
-                      className="mr-2"
-                    />
-                    {range}
-                  </label>
+                    control={
+                      <Checkbox
+                        checked={filters.experience.includes(range)}
+                        onChange={() => handleFilterChange('experience', range)}
+                        size="small"
+                      />
+                    }
+                    label={range}
+                  />
                 ))}
-              </div>
-            </div>
-          )}
-        </div>
+              </FormGroup>
+            </Paper>
+          </Popover>
+        </Box>
 
         {/* Graduation Year Filter */}
-        <div className="relative filter-dropdown">
-          <button
-            onClick={() => toggleDropdown('graduationYear')}
-            className="btn btn-secondary"
+        <Box>
+          <Button
+            variant="outlined"
+            onClick={(e) => handleClick(e, 'graduationYear')}
+            startIcon={<FilterListIcon />}
+            size="small"
           >
-            Graduation Year
-          </button>
-          {isOpen.graduationYear && (
-            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-              <div className="py-1">
+            Graduation Year {filters.graduationYear.length > 0 && `(${filters.graduationYear.length})`}
+          </Button>
+          <Popover
+            open={Boolean(anchorEl.graduationYear)}
+            anchorEl={anchorEl.graduationYear}
+            onClose={() => handleClose('graduationYear')}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+          >
+            <Paper sx={{ p: 2 }}>
+              <FormGroup>
                 {graduationYears.map((year) => (
-                  <label
+                  <FormControlLabel
                     key={year}
-                    className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.graduationYear.includes(year)}
-                      onChange={() => handleFilterChange('graduationYear', year)}
-                      className="mr-2"
-                    />
-                    {year}
-                  </label>
+                    control={
+                      <Checkbox
+                        checked={filters.graduationYear.includes(year)}
+                        onChange={() => handleFilterChange('graduationYear', year)}
+                        size="small"
+                      />
+                    }
+                    label={year}
+                  />
                 ))}
-              </div>
-            </div>
-          )}
-        </div>
+              </FormGroup>
+            </Paper>
+          </Popover>
+        </Box>
 
         {/* Clear Filters Button */}
-        <button
+        <Button
+          variant="outlined"
           onClick={clearFilters}
-          className="btn btn-secondary"
+          size="small"
+          disabled={!Object.values(filters).some(arr => arr.length > 0)}
         >
           Clear Filters
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Stack>
+    </Box>
   );
 } 

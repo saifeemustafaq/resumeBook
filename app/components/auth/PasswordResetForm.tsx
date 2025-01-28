@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   TextField,
@@ -33,6 +34,7 @@ interface PasswordStrength {
 }
 
 export default function PasswordResetForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState<PasswordResetFormData>({
     currentPassword: '',
     newPassword: '',
@@ -131,11 +133,11 @@ export default function PasswordResetForm() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Password reset failed');
+        throw new Error(data.error || 'Password reset failed');
       }
 
-      // Redirect to login page on success
-      window.location.href = '/login';
+      // Redirect to admin dashboard on success
+      router.push('/admin-dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
