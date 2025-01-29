@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup-test-users": "NODE_OPTIONS='--loader ts-node/esm' ts-node -P tsconfig.json app/scripts/setup-test-users.ts"
+    "setup-test-users": "NODE_OPTIONS='--loader ts-node/esm' ts-node -P tsconfig.json app/scripts/setup-test-users.ts",
+    "migrate-experience": "NODE_OPTIONS='--loader ts-node/esm' ts-node -P tsconfig.json app/scripts/migrate-experience-format.ts"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.26.0",

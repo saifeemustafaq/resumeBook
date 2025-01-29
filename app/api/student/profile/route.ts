@@ -58,9 +58,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('=== Student Profile POST Request ===');
     // Get token from cookie
     const token = req.cookies.get('auth-token')?.value;
+    console.log('Token present:', !!token);
+    
     if (!token) {
+      console.log('❌ No token found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -71,18 +75,24 @@ export async function POST(req: NextRequest) {
         email: string;
         role: 'student' | 'admin';
       };
+      console.log('Token verified. User:', decoded.email, 'Role:', decoded.role);
 
       if (decoded.role !== 'student') {
+        console.log('❌ Invalid role:', decoded.role);
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
       const data = await req.json();
+      console.log('Received profile data:', data);
+      
       await connectDB();
+      console.log('Connected to database');
 
       // Validate required fields
       const requiredFields = ['name', 'schoolName', 'gpa', 'yearsOfExperience', 'graduationDate', 'linkedinUrl', 'bio'];
       for (const field of requiredFields) {
         if (!data[field]) {
+          console.log('❌ Missing required field:', field);
           return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 });
         }
       }
@@ -104,18 +114,30 @@ export async function POST(req: NextRequest) {
 
       // Find existing profile to handle file cleanup
       const existingProfile = await StudentProfile.findOne({ email: decoded.email });
+      console.log('Existing profile found:', !!existingProfile);
       
       if (existingProfile) {
-        // Delete old files if they're being replaced
-        if (existingProfile.resumeUrl && existingProfile.resumeUrl !== data.resumeUrl) {
-          await deleteFile(existingProfile.resumeUrl);
+        // Delete old files if they're being replaced AND new files are provided
+        if (data.resumeUrl && existingProfile.resumeUrl && existingProfile.resumeUrl !== data.resumeUrl) {
+          try {
+            await deleteFile(existingProfile.resumeUrl);
+          } catch (error) {
+            console.warn('Failed to delete old resume file:', error);
+            // Continue with the update even if file deletion fails
+          }
         }
-        if (existingProfile.profilePictureUrl && existingProfile.profilePictureUrl !== data.profilePictureUrl) {
-          await deleteFile(existingProfile.profilePictureUrl);
+        if (data.profilePictureUrl && existingProfile.profilePictureUrl && existingProfile.profilePictureUrl !== data.profilePictureUrl) {
+          try {
+            await deleteFile(existingProfile.profilePictureUrl);
+          } catch (error) {
+            console.warn('Failed to delete old profile picture:', error);
+            // Continue with the update even if file deletion fails
+          }
         }
       }
 
       // Add or update profile
+      console.log('Saving profile...');
       const profile = await StudentProfile.findOneAndUpdate(
         { email: decoded.email },
         {
@@ -125,13 +147,16 @@ export async function POST(req: NextRequest) {
         },
         { upsert: true, new: true }
       );
+      console.log('✅ Profile saved successfully');
+      console.log('Profile ID:', profile._id);
 
       return NextResponse.json(profile);
     } catch (err) {
+      console.error('❌ Token verification error:', err);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
   } catch (error) {
-    console.error('Error saving profile:', error);
+    console.error('❌ Error saving profile:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

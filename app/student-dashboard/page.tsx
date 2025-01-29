@@ -1,8 +1,9 @@
 'use client';
 
-import { Container, Paper, Typography } from '@mui/material';
+import { Container, Paper, Typography, Box } from '@mui/material';
 import ProfileForm from '../components/student/ProfileForm';
 import ChangePasswordSection from '../components/auth/ChangePasswordSection';
+import Header from '../components/layout/Header';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -29,17 +30,22 @@ export default function StudentDashboard() {
   }, [router]);
 
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Student Dashboard
-        </Typography>
-        <Typography variant="body1" paragraph align="center" color="text.secondary">
-          Manage your profile and resume information
-        </Typography>
-        <ProfileForm />
-      </Paper>
-      <ChangePasswordSection />
-    </Container>
+    <>
+      <Header userType="student" />
+      <Box sx={{ py: 4 }}>
+        <Container maxWidth="md">
+          <Paper elevation={3} sx={{ p: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom align="center">
+              Student Dashboard
+            </Typography>
+            <Typography variant="body1" paragraph align="center" color="text.secondary">
+              Manage your profile and resume information
+            </Typography>
+            <ProfileForm />
+          </Paper>
+          <ChangePasswordSection />
+        </Container>
+      </Box>
+    </>
   );
 } 

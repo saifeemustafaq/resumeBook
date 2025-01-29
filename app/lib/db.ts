@@ -4,9 +4,9 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/resume
 
 let isConnected = false;
 
-const connectDB = async () => {
+export const connectDB = async () => {
   if (isConnected) {
-    return;
+    return mongoose;
   }
 
   try {
@@ -20,4 +20,5 @@ const connectDB = async () => {
   }
 };
 
-export default connectDB; 
+export default connectDB;
+export { mongoose }; 

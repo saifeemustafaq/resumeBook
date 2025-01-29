@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends mongoose.Document {
@@ -100,4 +100,8 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-export const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema); 
+// Ensure proper typing for the User model
+export type UserModel = Model<IUser, {}, { comparePassword: (candidatePassword: string) => Promise<boolean> }>;
+
+// Export the User model with proper typing
+export const User: UserModel = mongoose.models.User || mongoose.model<IUser>('User', userSchema); 

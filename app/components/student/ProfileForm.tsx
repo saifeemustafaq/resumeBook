@@ -16,7 +16,12 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText
 } from '@mui/material';
 import { CloudUpload as CloudUploadIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -31,7 +36,7 @@ interface ProfileFormData {
   name: string;
   schoolName: string;
   gpa: number;
-  yearsOfExperience: number;
+  yearsOfExperience: typeof EXPERIENCE_RANGES[number];
   graduationDate: Date;
   linkedinUrl: string;
   bio: string;
@@ -39,16 +44,20 @@ interface ProfileFormData {
   profilePictureUrl?: string;
 }
 
+const EXPERIENCE_RANGES = ['0-1', '1-3', '3-6', '6+'] as const;
+
 const schema = yup.object().shape({
   name: yup.string().required('Name is required'),
-  schoolName: yup.string().required('School name is required'),
+  schoolName: yup.string()
+    .required('School name is required')
+    .max(55, 'School name cannot exceed 55 characters'),
   gpa: yup.number()
     .required('GPA is required')
     .min(1.0, 'GPA must be at least 1.0')
     .max(4.04, 'GPA cannot exceed 4.04'),
-  yearsOfExperience: yup.number()
+  yearsOfExperience: yup.string()
     .required('Years of experience is required')
-    .min(0, 'Years of experience cannot be negative'),
+    .oneOf(EXPERIENCE_RANGES, 'Please select a valid experience range'),
   graduationDate: yup.date().required('Graduation date is required'),
   linkedinUrl: yup.string()
     .required('LinkedIn URL is required')
@@ -136,7 +145,7 @@ export default function ProfileForm() {
       name: '',
       schoolName: '',
       gpa: 0,
-      yearsOfExperience: 0,
+      yearsOfExperience: '0-1',
       linkedinUrl: '',
       bio: ''
     }
@@ -303,6 +312,7 @@ export default function ProfileForm() {
       const response = await fetch(`${API_BASE}/student/profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (response.ok) {
@@ -387,6 +397,7 @@ export default function ProfileForm() {
               {...register('schoolName')}
               error={!!errors.schoolName}
               helperText={errors.schoolName?.message}
+              inputProps={{ maxLength: 55 }}
               sx={{ mb: 2 }}
             />
 
@@ -402,16 +413,32 @@ export default function ProfileForm() {
               sx={{ mb: 2 }}
             />
 
-            <TextField
-              fullWidth
-              label="Years of Experience"
-              variant="outlined"
-              type="number"
-              {...register('yearsOfExperience')}
+            <FormControl 
+              fullWidth 
               error={!!errors.yearsOfExperience}
-              helperText={errors.yearsOfExperience?.message}
               sx={{ mb: 2 }}
-            />
+            >
+              <InputLabel>Years of Experience</InputLabel>
+              <Controller
+                name="yearsOfExperience"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    label="Years of Experience"
+                  >
+                    {EXPERIENCE_RANGES.map((range) => (
+                      <MenuItem key={range} value={range}>
+                        {range} {range === '6+' ? 'years' : 'years'}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+              {errors.yearsOfExperience && (
+                <FormHelperText>{errors.yearsOfExperience.message}</FormHelperText>
+              )}
+            </FormControl>
 
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <Controller

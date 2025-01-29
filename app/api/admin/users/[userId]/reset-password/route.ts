@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import connectDB from '@/app/lib/db';
-import { User } from '@/app/models/User';
+import { connectDB } from '@/app/lib/db';
+import { User, type IUser } from '@/app/models/User';
 import bcrypt from 'bcryptjs';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { userId: string } }
 ) {
   try {
     const session = await getServerSession();
@@ -14,8 +14,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
-    if (!id) {
+    const { userId } = params;
+    if (!userId) {
       return NextResponse.json(
         { error: 'User ID is required' },
         { status: 400 }
@@ -30,7 +30,7 @@ export async function POST(
     const passwordHash = await bcrypt.hash(tempPassword, salt);
 
     const user = await User.findByIdAndUpdate(
-      id,
+      userId,
       {
         passwordHash,
         isFirstLogin: true,
@@ -46,16 +46,12 @@ export async function POST(
       );
     }
 
-    // In a production environment, you would send this password to the user via email
     return NextResponse.json({
       message: 'Password reset successful',
       temporaryPassword: tempPassword,
     });
   } catch (error) {
-    console.error('Error resetting password:', error);
-    return NextResponse.json(
-      { error: 'Failed to reset password' },
-      { status: 500 }
-    );
+    console.error('Error in reset password:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 } 

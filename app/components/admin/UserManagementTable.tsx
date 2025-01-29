@@ -114,6 +114,15 @@ export default function UserManagementTable() {
     }
   };
 
+  const generateCsv = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Name,Email,Status,Last Login\n" +
+      users.map(user => 
+        `${user.name},${user.email},${user.status},${user.lastLogin}`
+      ).join("\n");
+    return encodeURI(csvContent);
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -150,12 +159,7 @@ export default function UserManagementTable() {
           <Button
             variant="outlined"
             onClick={() => {
-              const csvContent = "data:text/csv;charset=utf-8," + 
-                "Name,Email,Status,Last Login\n" +
-                users.map(user => 
-                  `${user.name},${user.email},${user.status},${user.lastLogin}`
-                ).join("\n");
-              const encodedUri = encodeURI(csvContent);
+              const encodedUri = generateCsv();
               const link = document.createElement("a");
               link.setAttribute("href", encodedUri);
               link.setAttribute("download", "users.csv");
@@ -200,6 +204,7 @@ export default function UserManagementTable() {
                   <TableCell>{new Date(user.lastLogin).toLocaleString()}</TableCell>
                   <TableCell align="right">
                     <IconButton
+                      key={`reset-${user.id}`}
                       onClick={() => handleResetPassword(user.id)}
                       title="Reset Password"
                       size="small"
@@ -207,6 +212,7 @@ export default function UserManagementTable() {
                       <Lock />
                     </IconButton>
                     <IconButton
+                      key={`toggle-${user.id}`}
                       onClick={() => handleToggleStatus(user.id, user.status)}
                       title={user.status === 'active' ? 'Disable User' : 'Enable User'}
                       size="small"
@@ -214,6 +220,7 @@ export default function UserManagementTable() {
                       {user.status === 'active' ? <LockOpen /> : <Lock />}
                     </IconButton>
                     <IconButton
+                      key={`delete-${user.id}`}
                       onClick={() => handleDeleteUser(user.id)}
                       title="Delete User"
                       size="small"

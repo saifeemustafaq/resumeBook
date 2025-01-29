@@ -15,7 +15,7 @@ interface FilterSectionProps {
   onFilterChange: (filters: FilterState) => void;
   students: Array<{
     gpa: number;
-    yearsOfExperience: number;
+    yearsOfExperience: string;
     graduationDate: string;
   }>;
 }
@@ -137,7 +137,7 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
               <FormGroup>
                 {GPA_RANGES.map((range) => (
                   <FormControlLabel
-                    key={range}
+                    key={`gpa-${range}`}
                     control={
                       <Checkbox
                         checked={filters.gpa.includes(range)}
@@ -180,7 +180,7 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
               <FormGroup>
                 {EXPERIENCE_RANGES.map((range) => (
                   <FormControlLabel
-                    key={range}
+                    key={`exp-${range}`}
                     control={
                       <Checkbox
                         checked={filters.experience.includes(range)}
@@ -223,7 +223,7 @@ export default function FilterSection({ onFilterChange, students }: FilterSectio
               <FormGroup>
                 {graduationYears.map((year) => (
                   <FormControlLabel
-                    key={year}
+                    key={`grad-${year}`}
                     control={
                       <Checkbox
                         checked={filters.graduationYear.includes(year)}

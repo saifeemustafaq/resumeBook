@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+const EXPERIENCE_RANGES = ['0-1', '1-3', '3-6', '6+'] as const;
+
 const studentProfileSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -21,9 +23,9 @@ const studentProfileSchema = new mongoose.Schema({
     max: 4.04,
   },
   yearsOfExperience: {
-    type: Number,
+    type: String,
     required: true,
-    min: 0,
+    enum: EXPERIENCE_RANGES,
   },
   graduationDate: {
     type: Date,

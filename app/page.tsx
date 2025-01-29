@@ -11,7 +11,7 @@ interface StudentProfile {
   name: string;
   schoolName: string;
   gpa: number;
-  yearsOfExperience: number;
+  yearsOfExperience: string;
   graduationDate: string;
   linkedinUrl: string;
   bio: string;
@@ -63,11 +63,7 @@ export default function Home() {
       });
 
       // Experience filter
-      const expPass = !hasExpFilter || filters.experience.some(range => {
-        if (range === '6+') return student.yearsOfExperience >= 6;
-        const [min, max] = range.split('-').map(Number);
-        return student.yearsOfExperience >= min && student.yearsOfExperience <= max;
-      });
+      const expPass = !hasExpFilter || filters.experience.includes(student.yearsOfExperience);
 
       // Graduation year filter
       const yearPass = !hasYearFilter || filters.graduationYear.includes(
